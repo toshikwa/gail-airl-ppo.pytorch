@@ -2,7 +2,7 @@ import numpy as np
 import torch
 
 
-class SirializedBuffer:
+class SerializedBuffer:
 
     def __init__(self, path, device):
         tmp = torch.load(path)
@@ -26,7 +26,7 @@ class SirializedBuffer:
         )
 
 
-class Buffer(SirializedBuffer):
+class Buffer(SerializedBuffer):
 
     def __init__(self, buffer_size, state_shape, action_shape, device):
         self._n = 0

@@ -60,6 +60,7 @@ class PPO(Algorithm):
         self.optim_actor = Adam(self.actor.parameters(), lr=lr_actor)
         self.optim_critic = Adam(self.critic.parameters(), lr=lr_critic)
 
+        self.learning_steps_ppo = 0
         self.batch_size = batch_size
         self.rollout_length = rollout_length
         self.epoch_ppo = epoch_ppo
@@ -122,6 +123,7 @@ class PPO(Algorithm):
             np.random.shuffle(indices)
 
             for start in range(0, self.rollout_length, self.batch_size):
+                self.learning_steps_ppo += 1
                 idxes = indices[start:start+self.batch_size]
                 self.update_critic(states[idxes], targets[idxes], writer)
                 self.update_actor(
@@ -136,6 +138,10 @@ class PPO(Algorithm):
         loss_critic.backward(retain_graph=False)
         nn.utils.clip_grad_norm_(self.critic.parameters(), self.max_grad_norm)
         self.optim_critic.step()
+
+        if self.learning_steps_ppo % self.epoch_ppo == 0:
+            writer.add_scalar(
+                'loss/critic', loss_critic.item(), self.learning_steps)
 
     def update_actor(self, states, actions, log_pis_old, gaes, writer):
         log_pis = self.actor.evaluate_log_pi(states, actions)
@@ -154,6 +160,12 @@ class PPO(Algorithm):
         (loss_actor - self.coef_ent * entropy).backward(retain_graph=False)
         nn.utils.clip_grad_norm_(self.actor.parameters(), self.max_grad_norm)
         self.optim_actor.step()
+
+        if self.learning_steps_ppo % self.epoch_ppo == 0:
+            writer.add_scalar(
+                'loss/actor', loss_actor.item(), self.learning_steps)
+            writer.add_scalar(
+                'stats/entropy', entropy.item(), self.learning_steps)
 
     def save_models(self, save_dir):
         pass

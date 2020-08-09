@@ -16,7 +16,7 @@ class GAIL(PPO):
                  units_actor=(100, 100), units_critic=(32, 32),
                  units_disc=(100, 100), rollout_length=50000, epoch_ppo=50,
                  epoch_disc=10, clip_eps=0.2, lambd=0.97, coef_ent=0.0,
-                 max_grad_norm=10.0):
+                 coef_ent_disc=1e-3, max_grad_norm=10.0):
         super().__init__(
             state_shape, action_shape, device, seed, gamma, batch_size,
             lr_actor, lr_critic, units_actor, units_critic, rollout_length,
@@ -34,9 +34,11 @@ class GAIL(PPO):
             hidden_activation=nn.Tanh()
         ).to(device)
 
+        self.learning_steps_disc = 0
         self.optim_disc = Adam(self.disc.parameters(), lr=lr_disc)
         self.batch_size_disc = batch_size_disc
         self.epoch_disc = epoch_disc
+        self.coef_ent_disc = coef_ent_disc
 
     def update(self, writer):
         self.learning_steps += 1
@@ -45,6 +47,8 @@ class GAIL(PPO):
         states, actions, _, dones, log_pis = self.buffer.get()
 
         for _ in range(self.epoch_disc):
+            self.learning_steps_disc += 1
+
             # Random index to sample.
             idxes = np.random.randint(
                 low=0, high=self.rollout_length, size=self.batch_size_disc)
@@ -67,18 +71,24 @@ class GAIL(PPO):
         logits_pi = self.disc(states, actions)
         logits_exp = self.disc(states_exp, actions_exp)
 
+        # Calculate the entropy of Bernoulli distribution.
+        xs = torch.cat([logits_pi, logits_exp], dim=0)
+        entropy = torch.sigmoid(-xs).mul(xs).mean() - F.logsigmoid(xs).mean()
+
         # Discriminator is to maximize E_{\pi} [log(D)] + E_{exp} [log(1 - D)].
         loss_pi = -F.logsigmoid(logits_pi).mean()
         loss_exp = -F.logsigmoid(-logits_exp).mean()
-        loss_disc = loss_pi + loss_exp
+        loss_disc = loss_pi + loss_exp - self.coef_ent_disc * entropy
 
         self.optim_disc.zero_grad()
         loss_disc.backward()
         self.optim_disc.step()
 
-        if self.learning_steps % self.epoch_disc == 0:
+        if self.learning_steps_disc % self.epoch_disc == 0:
             writer.add_scalar(
                 'loss/disc', loss_disc.item(), self.learning_steps)
+            writer.add_scalar(
+                'stats/entropy_disc', entropy.item(), self.learning_steps)
 
             # Discriminator's accuracies.
             with torch.no_grad():

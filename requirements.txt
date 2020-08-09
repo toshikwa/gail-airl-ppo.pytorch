@@ -1,4 +1,5 @@
 pyyaml
+tqdm
 gym==0.17.2
 numpy==1.19.1
 torch==1.6.0

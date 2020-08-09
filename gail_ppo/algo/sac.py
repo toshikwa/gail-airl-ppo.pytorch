@@ -180,5 +180,6 @@ class SACExpert(SAC):
             hidden_units=(256, 256),
             hidden_activation=nn.ReLU(inplace=True)
         ).to(device)
-        self.actor.load(torch.load(path))
+        self.actor.load_state_dict(torch.load(path))
         disable_gradient(self.actor)
+        self.device = device

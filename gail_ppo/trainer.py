@@ -6,8 +6,8 @@ from torch.utils.tensorboard import SummaryWriter
 
 class OfflineTrainer:
 
-    def __init__(self, env_test, algo, log_dir, seed=0, num_steps=10**6,
-                 eval_interval=10**4, num_eval_episodes=10):
+    def __init__(self, env_test, algo, log_dir, seed=0, num_steps=10**7,
+                 eval_interval=10**5, num_eval_episodes=5):
 
         self.env_test = env_test
         self.env_test.seed(2**31-seed)

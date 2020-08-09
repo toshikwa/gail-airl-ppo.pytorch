@@ -60,3 +60,6 @@ class TwinnedStateActionFunction(nn.Module):
     def forward(self, states, actions):
         xs = torch.cat([states, actions], dim=-1)
         return self.net1(xs), self.net2(xs)
+
+    def q1(self, states, actions):
+        return self.net1(torch.cat([states, actions], dim=-1))

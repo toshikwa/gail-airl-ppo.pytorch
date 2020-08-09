@@ -4,7 +4,7 @@ from torch import nn
 
 
 def build_mlp(input_dim, output_dim, hidden_units=[64, 64],
-              hidden_activation=nn.Tanh()):
+              hidden_activation=nn.Tanh(), output_activation=None):
     layers = []
     units = input_dim
     for next_units in hidden_units:
@@ -12,6 +12,8 @@ def build_mlp(input_dim, output_dim, hidden_units=[64, 64],
         layers.append(hidden_activation)
         units = next_units
     layers.append(nn.Linear(units, output_dim))
+    if output_activation is not None:
+        layers.append(output_activation)
     return nn.Sequential(*layers)
 
 

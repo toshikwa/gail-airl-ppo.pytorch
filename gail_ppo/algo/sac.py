@@ -12,13 +12,13 @@ from gail_ppo.utils import soft_update, disable_gradient
 class SAC(Algorithm):
 
     def __init__(self, state_shape, action_shape, device, seed, gamma=0.99,
-                 batch_size=256, replay_size=10**6, start_steps=10000,
+                 batch_size=256, buffer_size=10**6, start_steps=10000,
                  lr_actor=3e-4, lr_critic=3e-4, lr_alpha=3e-4, tau=5e-3):
         super().__init__(state_shape, action_shape, device, seed, gamma)
 
         # Replay buffer.
         self.buffer = Buffer(
-            buffer_size=replay_size,
+            buffer_size=buffer_size,
             state_shape=state_shape,
             action_shape=action_shape,
             device=device

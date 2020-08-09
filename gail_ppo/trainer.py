@@ -32,7 +32,7 @@ class OfflineTrainer:
 
         for step in range(1, self.num_steps + 1):
             # Update.
-            self.algo.update()
+            self.algo.update(self.writer)
 
             # Evaluate regularly.
             if step % self.eval_interval == 0:
@@ -91,7 +91,7 @@ class OnlineTrainer(OfflineTrainer):
 
             # Update the algorithm whenever ready.
             if self.algo.is_update(step):
-                self.algo.update()
+                self.algo.update(self.writer)
 
             # Evaluate regularly.
             if step % self.eval_interval == 0:

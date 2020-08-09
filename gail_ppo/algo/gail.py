@@ -12,13 +12,15 @@ class GAIL(PPO):
 
     def __init__(self, buffer_exp, state_shape, action_shape, device, seed,
                  gamma=0.995, batch_size=50000, batch_size_disc=64,
-                 lr_actor=1e-3, lr_critic=1e-3, lr_disc=3e-4,
-                 rollout_length=50000, epoch_ppo=50, epoch_disc=10,
-                 clip_eps=0.2, lambd=0.97, coef_ent=0.0, max_grad_norm=10.0):
+                 lr_actor=1e-4, lr_critic=1e-3, lr_disc=3e-4,
+                 units_actor=(100, 100), units_critic=(32, 32),
+                 units_disc=(100, 100), rollout_length=50000, epoch_ppo=50,
+                 epoch_disc=10, clip_eps=0.2, lambd=0.97, coef_ent=0.0,
+                 max_grad_norm=10.0):
         super().__init__(
             state_shape, action_shape, device, seed, gamma, batch_size,
-            lr_actor, lr_critic, rollout_length, epoch_ppo, clip_eps,
-            lambd, coef_ent, max_grad_norm
+            lr_actor, lr_critic, units_actor, units_critic, rollout_length,
+            epoch_ppo, clip_eps, lambd, coef_ent, max_grad_norm
         )
 
         # Expert's buffer.
@@ -28,7 +30,7 @@ class GAIL(PPO):
         self.disc = StateActionFunction(
             state_shape=state_shape,
             action_shape=action_shape,
-            hidden_units=(100, 100),
+            hidden_units=units_disc,
             hidden_activation=nn.Tanh()
         ).to(device)
 

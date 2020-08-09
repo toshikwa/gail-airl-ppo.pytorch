@@ -29,6 +29,7 @@ class PPO(Algorithm):
 
     def __init__(self, state_shape, action_shape, device, seed, gamma=0.995,
                  batch_size=64, lr_actor=3e-4, lr_critic=3e-4,
+                 units_actor=(64, 64), units_critic=(64, 64),
                  rollout_length=2048, epoch_ppo=10, clip_eps=0.2,
                  lambd=0.97, coef_ent=0.0, max_grad_norm=10.0):
         super().__init__(state_shape, action_shape, device, seed, gamma)
@@ -45,14 +46,14 @@ class PPO(Algorithm):
         self.actor = StateIndependentPolicy(
             state_shape=state_shape,
             action_shape=action_shape,
-            hidden_units=(64, 64),
+            hidden_units=units_actor,
             hidden_activation=nn.Tanh()
         ).to(device)
 
         # Critic.
         self.critic = StateFunction(
             state_shape=state_shape,
-            hidden_units=(64, 64),
+            hidden_units=units_critic,
             hidden_activation=nn.Tanh()
         ).to(device)
 

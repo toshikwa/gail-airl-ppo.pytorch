@@ -4,7 +4,7 @@ from datetime import datetime
 import torch
 import gym
 
-from gail_ppo.algo import ONLINE_ALGOS
+from gail_ppo.algo import RL_ALGOS
 from gail_ppo.trainer import OnlineTrainer
 
 
@@ -12,7 +12,7 @@ def run(args):
     env = gym.make(args.env_id)
     env_test = gym.make(args.env_id)
 
-    algo = ONLINE_ALGOS[args.algo](
+    algo = RL_ALGOS[args.algo](
         state_shape=env.observation_space.shape,
         action_shape=env.action_space.shape,
         device=torch.device("cuda" if args.cuda else "cpu"),
@@ -29,6 +29,7 @@ def run(args):
         algo=algo,
         log_dir=log_dir,
         num_steps=args.num_steps,
+        eval_interval=args.eval_interval,
         seed=args.seed
     )
     trainer.train()
@@ -37,6 +38,7 @@ def run(args):
 if __name__ == '__main__':
     p = argparse.ArgumentParser()
     p.add_argument('--num_steps', type=int, default=10**6)
+    p.add_argument('--eval_interval', type=int, default=10**4)
     p.add_argument('--env_id', type=str, default='HalfCheetahBulletEnv-v0')
     p.add_argument('--algo', type=str, default='sac')
     p.add_argument('--cuda', action='store_true')

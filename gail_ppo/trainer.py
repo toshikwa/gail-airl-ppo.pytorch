@@ -6,8 +6,8 @@ from torch.utils.tensorboard import SummaryWriter
 
 class OfflineTrainer:
 
-    def __init__(self, env_test, algo, log_dir, seed=0, num_steps=10**7,
-                 eval_interval=10**5, num_eval_episodes=5):
+    def __init__(self, env_test, algo, log_dir, seed=0, num_steps=10**5,
+                 eval_interval=10**3, num_eval_episodes=5):
 
         self.env_test = env_test
         self.env_test.seed(2**31-seed)
@@ -31,9 +31,7 @@ class OfflineTrainer:
         self.start_time = time()
 
         for step in range(1, self.num_steps + 1):
-            # Update the algorithm whenever ready.
-            if self.algo.is_update(step):
-                self.algo.update(self.writer)
+            self.algo.update(self.writer)
 
             # Evaluate regularly.
             if step % self.eval_interval == 0:

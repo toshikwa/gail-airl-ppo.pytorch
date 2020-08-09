@@ -1,4 +1,3 @@
-import os
 import numpy as np
 import torch
 from torch import nn
@@ -14,7 +13,7 @@ class BCQ(Algorithm):
     def __init__(self, buffer_exp, state_shape, action_shape, device, seed,
                  gamma=0.99, batch_size=100, lr_noise=1e-3, lr_critic=1e-3,
                  lr_cvae=1e-3, coef_kl=0.5, lambd=0.75, std=0.05, tau=5e-3,
-                 n_train=10, n_test=10):
+                 n_train=10, n_test=100):
         super().__init__(state_shape, action_shape, device, seed, gamma)
 
         # Expert's buffer.
@@ -86,9 +85,6 @@ class BCQ(Algorithm):
             action = self.noise(state, action)
             action_index = self.critic.q1(state, action).argmax()
         return action[action_index].cpu().numpy()
-
-    def is_update(self, step):
-        return True
 
     def update(self, writer):
         states, actions, rewards, dones, next_states = \

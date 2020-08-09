@@ -1,0 +1,6 @@
+.vscode/
+logs/
+__pycache__/
+*.log
+*.out
+run.sh

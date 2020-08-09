@@ -81,11 +81,14 @@ class BCQ(Algorithm):
             np.tile(state, (self.n_test, 1)),
             dtype=torch.float, device=self.device
         )
-        with torch.no_grad():            
+        with torch.no_grad():
             action = self.cvae.generate(state)
             action = self.noise(state, action)
             action_index = self.critic.q1(state, action).argmax()
         return action[action_index].cpu().numpy()
+
+    def is_update(self, step):
+        return True
 
     def update(self, writer):
         states, actions, rewards, dones, next_states = \

@@ -11,7 +11,10 @@ from gail_ppo.trainer import OfflineTrainer
 
 def run(args):
     env_test = gym.make(args.env_id)
-    buffer_exp = SirializedBuffer(args.buffer)
+    buffer_exp = SirializedBuffer(
+        path=args.buffer,
+        device=torch.device("cuda" if args.cuda else "cpu")
+    )
 
     algo = OFFLINE_ALGOS[args.algo](
         buffer_exp=buffer_exp,
@@ -39,7 +42,7 @@ if __name__ == '__main__':
     p = argparse.ArgumentParser()
     p.add_argument('--buffer', type=str, required=True)
     p.add_argument('--num_steps', type=int, default=3*10**7)
-    p.add_argument('--env_id', type=str, default='HalfCheetah-v3')
+    p.add_argument('--env_id', type=str, default='HalfCheetahBulletEnv-v0')
     p.add_argument('--algo', type=str, default='gail')
     p.add_argument('--cuda', action='store_true')
     p.add_argument('--seed', type=int, default=0)

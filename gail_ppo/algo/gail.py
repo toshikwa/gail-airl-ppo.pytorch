@@ -11,9 +11,9 @@ from gail_ppo.network import StateActionFunction
 class GAIL(PPO):
 
     def __init__(self, buffer_exp, state_shape, action_shape, device, seed,
-                 gamma=0.995, batch_size=500, batch_size_disc=64,
-                 lr_actor=3e-4, lr_critic=3e-4, lr_disc=3e-4,
-                 rollout_length=5000, epoch_ppo=5, epoch_disc=10,
+                 gamma=0.995, batch_size=50000, batch_size_disc=64,
+                 lr_actor=1e-3, lr_critic=1e-3, lr_disc=3e-4,
+                 rollout_length=50000, epoch_ppo=50, epoch_disc=10,
                  clip_eps=0.2, lambd=0.97, coef_ent=0.0, max_grad_norm=10.0):
         super().__init__(
             state_shape, action_shape, device, seed, gamma, batch_size,
@@ -30,7 +30,7 @@ class GAIL(PPO):
             action_shape=action_shape,
             hidden_units=(100, 100),
             hidden_activation=nn.Tanh()
-        ).to(self.device)
+        ).to(device)
 
         self.optim_disc = Adam(self.disc.parameters(), lr=lr_disc)
         self.batch_size_disc = batch_size_disc
@@ -74,7 +74,7 @@ class GAIL(PPO):
         loss_disc.backward()
         self.optim_disc.step()
 
-        if self.learning_steps % 100 == 0:
+        if self.learning_steps % self.epoch_disc == 0:
             writer.add_scalar(
                 'loss/disc', loss_disc.item(), self.learning_steps)
 

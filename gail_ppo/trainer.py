@@ -31,8 +31,9 @@ class OfflineTrainer:
         self.start_time = time()
 
         for step in range(1, self.num_steps + 1):
-            # Update.
-            self.algo.update(self.writer)
+            # Update the algorithm whenever ready.
+            if self.algo.is_update(step):
+                self.algo.update(self.writer)
 
             # Evaluate regularly.
             if step % self.eval_interval == 0:

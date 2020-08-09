@@ -30,7 +30,7 @@ class SAC(Algorithm):
             action_shape=action_shape,
             hidden_units=(256, 256),
             hidden_activation=nn.ReLU(inplace=True)
-        ).to(self.device)
+        ).to(device)
 
         # Critic.
         self.critic = TwinnedStateActionFunction(
@@ -38,13 +38,13 @@ class SAC(Algorithm):
             action_shape=action_shape,
             hidden_units=(256, 256),
             hidden_activation=nn.ReLU(inplace=True)
-        ).to(self.device)
+        ).to(device)
         self.critic_target = TwinnedStateActionFunction(
             state_shape=state_shape,
             action_shape=action_shape,
             hidden_units=(256, 256),
             hidden_activation=nn.ReLU(inplace=True)
-        ).to(self.device).eval()
+        ).to(device).eval()
 
         soft_update(self.critic_target, self.critic, 1.0)
         disable_gradient(self.critic_target)
@@ -125,7 +125,7 @@ class SAC(Algorithm):
         (loss_critic1 + loss_critic2).backward(retain_graph=False)
         self.optim_critic.step()
 
-        if self.learning_steps % 100 == 0:
+        if self.learning_steps % 1000 == 0:
             writer.add_scalar(
                 'loss/critic1', loss_critic1.item(), self.learning_steps)
             writer.add_scalar(
@@ -150,7 +150,7 @@ class SAC(Algorithm):
         with torch.no_grad():
             self.alpha = self.log_alpha.exp().item()
 
-        if self.learning_steps % 100 == 0:
+        if self.learning_steps % 1000 == 0:
             writer.add_scalar(
                 'loss/actor', loss_actor.item(), self.learning_steps)
             writer.add_scalar(
@@ -169,11 +169,16 @@ class SAC(Algorithm):
             self.actor.state_dict(),
             os.path.join(save_dir, 'actor.pth')
         )
-        torch.save(
-            self.critic.state_dict(),
-            os.path.join(save_dir, 'critic.pth')
-        )
-        torch.save(
-            self.critic_target.state_dict(),
-            os.path.join(save_dir, 'critic_target.pth')
-        )
+
+
+class SACExpert(SAC):
+
+    def __init__(self, state_shape, action_shape, device, path):
+        self.actor = StateDependentPolicy(
+            state_shape=state_shape,
+            action_shape=action_shape,
+            hidden_units=(256, 256),
+            hidden_activation=nn.ReLU(inplace=True)
+        ).to(device)
+        self.actor.load(torch.load(path))
+        disable_gradient(self.actor)

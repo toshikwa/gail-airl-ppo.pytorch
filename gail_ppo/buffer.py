@@ -4,7 +4,7 @@ import torch
 
 class SirializedBuffer:
 
-    def __init__(self, path, device=torch.device('cuda')):
+    def __init__(self, path, device):
         tmp = torch.load(path)
         self.buffer_size = self._n = tmp['state'].size(0)
         self.device = device

@@ -47,14 +47,14 @@ class PPO(Algorithm):
             action_shape=action_shape,
             hidden_units=(64, 64),
             hidden_activation=nn.Tanh()
-        ).to(self.device)
+        ).to(device)
 
         # Critic.
         self.critic = StateFunction(
             state_shape=state_shape,
             hidden_units=(64, 64),
             hidden_activation=nn.Tanh()
-        ).to(self.device)
+        ).to(device)
 
         self.optim_actor = Adam(self.actor.parameters(), lr=lr_actor)
         self.optim_critic = Adam(self.critic.parameters(), lr=lr_critic)

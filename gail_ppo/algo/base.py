@@ -22,6 +22,10 @@ class Algorithm(ABC):
         pass
 
     @abstractmethod
+    def is_update(self, step):
+        pass
+
+    @abstractmethod
     def step(self, env, state, t, step):
         pass
 

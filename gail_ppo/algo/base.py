@@ -9,12 +9,17 @@ class Algorithm(ABC):
     def __init__(self, state_shape, action_shape, device, seed, gamma):
         np.random.seed(seed)
         torch.manual_seed(seed)
+        torch.cuda.manual_seed(seed)
 
         self.learning_steps = 0
         self.state_shape = state_shape
         self.action_shape = action_shape
         self.device = device
         self.gamma = gamma
+
+    @abstractmethod
+    def exploit(self, env, state, t, step):
+        pass
 
     @abstractmethod
     def step(self, env, state, t, step):

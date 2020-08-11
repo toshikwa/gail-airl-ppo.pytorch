@@ -12,8 +12,9 @@ from gail_ppo.utils import soft_update, disable_gradient
 class SAC(Algorithm):
 
     def __init__(self, state_shape, action_shape, device, seed, gamma=0.99,
-                 batch_size=256, buffer_size=10**6, start_steps=10000,
-                 lr_actor=3e-4, lr_critic=3e-4, lr_alpha=3e-4, tau=5e-3):
+                 batch_size=256, buffer_size=10**6, lr_actor=3e-4,
+                 lr_critic=3e-4, lr_alpha=3e-4, units_actor=(256, 256),
+                 units_critic=(256, 256), start_steps=10000, tau=5e-3):
         super().__init__(state_shape, action_shape, device, seed, gamma)
 
         # Replay buffer.
@@ -28,7 +29,7 @@ class SAC(Algorithm):
         self.actor = StateDependentPolicy(
             state_shape=state_shape,
             action_shape=action_shape,
-            hidden_units=(256, 256),
+            hidden_units=units_actor,
             hidden_activation=nn.ReLU(inplace=True)
         ).to(device)
 
@@ -36,13 +37,13 @@ class SAC(Algorithm):
         self.critic = TwinnedStateActionFunction(
             state_shape=state_shape,
             action_shape=action_shape,
-            hidden_units=(256, 256),
+            hidden_units=units_critic,
             hidden_activation=nn.ReLU(inplace=True)
         ).to(device)
         self.critic_target = TwinnedStateActionFunction(
             state_shape=state_shape,
             action_shape=action_shape,
-            hidden_units=(256, 256),
+            hidden_units=units_critic,
             hidden_activation=nn.ReLU(inplace=True)
         ).to(device).eval()
 
@@ -51,7 +52,9 @@ class SAC(Algorithm):
 
         # Entropy coefficient.
         self.alpha = 1.0
+        # We optimize log(alpha) because alpha should be always bigger than 0.
         self.log_alpha = torch.zeros(1, device=device, requires_grad=True)
+        # Target entropy is -|A|.
         self.target_entropy = -float(action_shape[0])
 
         self.optim_actor = Adam(self.actor.parameters(), lr=lr_actor)
@@ -62,18 +65,6 @@ class SAC(Algorithm):
         self.start_steps = start_steps
         self.tau = tau
 
-    def explore(self, state):
-        state = torch.tensor(state, dtype=torch.float, device=self.device)
-        with torch.no_grad():
-            action = self.actor.sample(state.unsqueeze_(0))[0]
-        return action.cpu().numpy()[0]
-
-    def exploit(self, state):
-        state = torch.tensor(state, dtype=torch.float, device=self.device)
-        with torch.no_grad():
-            action = self.actor(state.unsqueeze_(0))
-        return action.cpu().numpy()[0]
-
     def is_update(self, steps):
         return steps >= max(self.start_steps, self.batch_size)
 
@@ -83,13 +74,10 @@ class SAC(Algorithm):
         if step <= self.start_steps:
             action = env.action_space.sample()
         else:
-            action = self.explore(state)
-        next_state, reward, done, _ = env.step(action)
+            action = self.explore(state)[0]
 
-        if t == env._max_episode_steps:
-            mask = False
-        else:
-            mask = done
+        next_state, reward, done, _ = env.step(action)
+        mask = False if t == env._max_episode_steps else done
 
         self.buffer.append(state, action, reward, mask, next_state)
 
@@ -165,6 +153,7 @@ class SAC(Algorithm):
 
     def save_models(self, save_dir):
         super().save_models(save_dir)
+        # We only save actor to reduce workloads.
         torch.save(
             self.actor.state_dict(),
             os.path.join(save_dir, 'actor.pth')
@@ -181,5 +170,6 @@ class SACExpert(SAC):
             hidden_activation=nn.ReLU(inplace=True)
         ).to(device)
         self.actor.load_state_dict(torch.load(path))
+
         disable_gradient(self.actor)
         self.device = device

@@ -28,10 +28,9 @@ def calculate_gae(values, rewards, dones, gamma=0.995, lambd=0.997):
 class PPO(Algorithm):
 
     def __init__(self, state_shape, action_shape, device, seed, gamma=0.995,
-                 batch_size=64, lr_actor=3e-4, lr_critic=3e-4,
-                 units_actor=(64, 64), units_critic=(64, 64),
-                 rollout_length=2048, epoch_ppo=10, clip_eps=0.2,
-                 lambd=0.97, coef_ent=0.0, max_grad_norm=10.0):
+                 rollout_length=2048, lr_actor=3e-4, lr_critic=3e-4,
+                 units_actor=(64, 64), units_critic=(64, 64), epoch_ppo=10,
+                 clip_eps=0.2, lambd=0.97, coef_ent=0.0, max_grad_norm=10.0):
         super().__init__(state_shape, action_shape, device, seed, gamma)
 
         # Rollout buffer.
@@ -61,25 +60,12 @@ class PPO(Algorithm):
         self.optim_critic = Adam(self.critic.parameters(), lr=lr_critic)
 
         self.learning_steps_ppo = 0
-        self.batch_size = batch_size
         self.rollout_length = rollout_length
         self.epoch_ppo = epoch_ppo
         self.clip_eps = clip_eps
         self.lambd = lambd
         self.coef_ent = coef_ent
         self.max_grad_norm = max_grad_norm
-
-    def explore(self, state):
-        state = torch.tensor(state, dtype=torch.float, device=self.device)
-        with torch.no_grad():
-            action, log_pi = self.actor.sample(state.unsqueeze_(0))
-        return action.cpu().numpy()[0], log_pi.item()
-
-    def exploit(self, state):
-        state = torch.tensor(state, dtype=torch.float, device=self.device)
-        with torch.no_grad():
-            action = self.actor(state.unsqueeze_(0))
-        return action.cpu().numpy()[0]
 
     def is_update(self, step):
         return step % self.rollout_length == 0
@@ -89,11 +75,7 @@ class PPO(Algorithm):
 
         action, log_pi = self.explore(state)
         next_state, reward, done, _ = env.step(action)
-
-        if t == env._max_episode_steps:
-            mask = False
-        else:
-            mask = done
+        mask = False if t == env._max_episode_steps else done
 
         self.buffer.append(state, action, reward, mask, log_pi)
 
@@ -119,17 +101,9 @@ class PPO(Algorithm):
             values, rewards, dones, self.gamma, self.lambd)
 
         for _ in range(self.epoch_ppo):
-            indices = np.arange(self.rollout_length)
-            np.random.shuffle(indices)
-
-            for start in range(0, self.rollout_length, self.batch_size):
-                self.learning_steps_ppo += 1
-                idxes = indices[start:start+self.batch_size]
-                self.update_critic(states[idxes], targets[idxes], writer)
-                self.update_actor(
-                    states[idxes], actions[idxes], log_pis[idxes],
-                    gaes[idxes], writer
-                )
+            self.learning_steps_ppo += 1
+            self.update_critic(states[:-1], targets, writer)
+            self.update_actor(states[:-1], actions, log_pis, gaes, writer)
 
     def update_critic(self, states, targets, writer):
         loss_critic = (self.critic(states) - targets).pow_(2).mean()

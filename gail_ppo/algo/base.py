@@ -17,8 +17,20 @@ class Algorithm(ABC):
         self.device = device
         self.gamma = gamma
 
+    def explore(self, state):
+        state = torch.tensor(state, dtype=torch.float, device=self.device)
+        with torch.no_grad():
+            action, log_pi = self.actor.sample(state.unsqueeze_(0))
+        return action.cpu().numpy()[0], log_pi.item()
+
+    def exploit(self, state):
+        state = torch.tensor(state, dtype=torch.float, device=self.device)
+        with torch.no_grad():
+            action = self.actor(state.unsqueeze_(0))
+        return action.cpu().numpy()[0]
+
     @abstractmethod
-    def exploit(self, env, state, t, step):
+    def is_update(self, step):
         pass
 
     @abstractmethod

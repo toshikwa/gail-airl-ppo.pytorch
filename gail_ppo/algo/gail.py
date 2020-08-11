@@ -11,16 +11,16 @@ from gail_ppo.network import StateActionFunction
 class GAIL(PPO):
 
     def __init__(self, buffer_exp, state_shape, action_shape, device, seed,
-                 gamma=0.995, batch_size=50000, batch_size_disc=64,
-                 lr_actor=1e-4, lr_critic=1e-3, lr_disc=3e-4,
-                 units_actor=(100, 100), units_critic=(32, 32),
-                 units_disc=(100, 100), rollout_length=50000, epoch_ppo=50,
-                 epoch_disc=10, clip_eps=0.2, lambd=0.97, coef_ent=0.0,
-                 coef_ent_disc=1e-3, max_grad_norm=10.0):
+                 gamma=0.995, rollout_length=50000, batch_size=64,
+                 lr_actor=3e-4, lr_critic=3e-4, lr_disc=3e-4,
+                 units_actor=(64, 64), units_critic=(64, 64),
+                 units_disc=(100, 100), epoch_ppo=50, epoch_disc=10,
+                 clip_eps=0.2, lambd=0.97, coef_ent=0.0,
+                 coef_ent_disc=0.0, max_grad_norm=10.0):
         super().__init__(
-            state_shape, action_shape, device, seed, gamma, batch_size,
-            lr_actor, lr_critic, units_actor, units_critic, rollout_length,
-            epoch_ppo, clip_eps, lambd, coef_ent, max_grad_norm
+            state_shape, action_shape, device, seed, gamma, rollout_length,
+            lr_actor, lr_critic, units_actor, units_critic, epoch_ppo,
+            clip_eps, lambd, coef_ent, max_grad_norm
         )
 
         # Expert's buffer.
@@ -36,7 +36,7 @@ class GAIL(PPO):
 
         self.learning_steps_disc = 0
         self.optim_disc = Adam(self.disc.parameters(), lr=lr_disc)
-        self.batch_size_disc = batch_size_disc
+        self.batch_size = batch_size
         self.epoch_disc = epoch_disc
         self.coef_ent_disc = coef_ent_disc
 
@@ -51,10 +51,10 @@ class GAIL(PPO):
 
             # Random index to sample.
             idxes = np.random.randint(
-                low=0, high=self.rollout_length, size=self.batch_size_disc)
+                low=0, high=self.rollout_length, size=self.batch_size)
             # Samples from expert's demonstrations.
             states_exp, actions_exp = \
-                self.buffer_exp.sample(self.batch_size_disc)[:2]
+                self.buffer_exp.sample(self.batch_size)[:2]
             # Update discriminator.
             self.update_disc(
                 states[idxes], actions[idxes], states_exp, actions_exp, writer)
@@ -96,6 +96,3 @@ class GAIL(PPO):
                 acc_exp = (logits_exp < 0).float().mean().item()
             writer.add_scalar('stats/acc_pi', acc_pi, self.learning_steps)
             writer.add_scalar('stats/acc_exp', acc_exp, self.learning_steps)
-
-    def save_models(self, save_dir):
-        pass

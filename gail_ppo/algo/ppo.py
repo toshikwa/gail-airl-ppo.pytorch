@@ -1,9 +1,8 @@
-import numpy as np
 import torch
 from torch import nn
 from torch.optim import Adam
 
-from .base import Algorithm
+from .base import OnlineAlgorithm
 from gail_ppo.buffer import RolloutBuffer
 from gail_ppo.network import StateIndependentPolicy, StateFunction
 
@@ -25,7 +24,7 @@ def calculate_gae(values, rewards, dones, gamma=0.995, lambd=0.997):
     return targets, (gaes - gaes.mean()) / (gaes.std() + 1e-8)
 
 
-class PPO(Algorithm):
+class PPO(OnlineAlgorithm):
 
     def __init__(self, state_shape, action_shape, device, seed, gamma=0.995,
                  rollout_length=2048, lr_actor=3e-4, lr_critic=3e-4,

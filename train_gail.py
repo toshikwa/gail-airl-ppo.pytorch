@@ -6,7 +6,7 @@ import gym
 
 from gail_ppo.buffer import SerializedBuffer
 from gail_ppo.algo import GAIL
-from gail_ppo.trainer import Trainer
+from gail_ppo.trainer import OnlineTrainer
 
 
 def run(args):
@@ -29,7 +29,7 @@ def run(args):
     log_dir = os.path.join(
         'logs', args.env_id, 'gail', f'seed{args.seed}-{time}')
 
-    trainer = Trainer(
+    trainer = OnlineTrainer(
         env=env,
         env_test=env_test,
         algo=algo,

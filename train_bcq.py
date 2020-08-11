@@ -4,27 +4,31 @@ from datetime import datetime
 import torch
 import gym
 
-from gail_ppo.algo import SAC
-from gail_ppo.trainer import OnlineTrainer
+from gail_ppo.buffer import SerializedBuffer
+from gail_ppo.algo import BCQ
+from gail_ppo.trainer import OfflineTrainer
 
 
 def run(args):
-    env = gym.make(args.env_id)
     env_test = gym.make(args.env_id)
+    buffer_exp = SerializedBuffer(
+        path=args.buffer,
+        device=torch.device("cuda" if args.cuda else "cpu")
+    )
 
-    algo = SAC(
-        state_shape=env.observation_space.shape,
-        action_shape=env.action_space.shape,
+    algo = BCQ(
+        buffer_exp=buffer_exp,
+        state_shape=env_test.observation_space.shape,
+        action_shape=env_test.action_space.shape,
         device=torch.device("cuda" if args.cuda else "cpu"),
         seed=args.seed
     )
 
     time = datetime.now().strftime("%Y%m%d-%H%M")
     log_dir = os.path.join(
-        'logs', args.env_id, 'sac', f'seed{args.seed}-{time}')
+        'logs', args.env_id, 'gail', f'seed{args.seed}-{time}')
 
-    trainer = OnlineTrainer(
-        env=env,
+    trainer = OfflineTrainer(
         env_test=env_test,
         algo=algo,
         log_dir=log_dir,
@@ -37,8 +41,9 @@ def run(args):
 
 if __name__ == '__main__':
     p = argparse.ArgumentParser()
-    p.add_argument('--num_steps', type=int, default=3*10**6)
-    p.add_argument('--eval_interval', type=int, default=10**4)
+    p.add_argument('--buffer', type=str, required=True)
+    p.add_argument('--num_steps', type=int, default=10**5)
+    p.add_argument('--eval_interval', type=int, default=10**3)
     p.add_argument('--env_id', type=str, default='HalfCheetah-v3')
     p.add_argument('--cuda', action='store_true')
     p.add_argument('--seed', type=int, default=0)

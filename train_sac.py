@@ -37,9 +37,9 @@ def run(args):
 
 if __name__ == '__main__':
     p = argparse.ArgumentParser()
-    p.add_argument('--num_steps', type=int, default=10**6)
+    p.add_argument('--num_steps', type=int, default=3*10**6)
     p.add_argument('--eval_interval', type=int, default=10**4)
-    p.add_argument('--env_id', type=str, default='HalfCheetahBulletEnv-v0')
+    p.add_argument('--env_id', type=str, default='HalfCheetah-v3')
     p.add_argument('--cuda', action='store_true')
     p.add_argument('--seed', type=int, default=0)
     args = p.parse_args()

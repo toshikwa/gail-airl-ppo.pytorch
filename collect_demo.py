@@ -36,7 +36,7 @@ def run(args):
 if __name__ == '__main__':
     p = argparse.ArgumentParser()
     p.add_argument('--weight', type=str, required=True)
-    p.add_argument('--env_id', type=str, default='HalfCheetahBulletEnv-v0')
+    p.add_argument('--env_id', type=str, default='HalfCheetah-v3')
     p.add_argument('--buffer_size', type=int, default=10**6)
     p.add_argument('--std', type=float, default=0.0)
     p.add_argument('--p_rand', type=float, default=0.0)

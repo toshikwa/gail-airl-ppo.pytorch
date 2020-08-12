@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import torch
 
@@ -56,6 +57,9 @@ class Buffer(SerializedBuffer):
         self._n = min(self._n + 1, self.buffer_size)
 
     def save(self, path):
+        if not os.path.exists(os.path.dirname(path)):
+            os.makedirs(os.path.dirname(path))
+
         torch.save({
             'state': self.states.clone().cpu(),
             'action': self.actions.clone().cpu(),

@@ -3,8 +3,8 @@ from torch import nn
 from torch.optim import Adam
 
 from .base import OnlineAlgorithm
-from gail_ppo.buffer import RolloutBuffer
-from gail_ppo.network import StateIndependentPolicy, StateFunction
+from gail_ppo_bcq.buffer import RolloutBuffer
+from gail_ppo_bcq.network import StateIndependentPolicy, StateFunction
 
 
 def calculate_gae(values, rewards, dones, gamma=0.995, lambd=0.997):

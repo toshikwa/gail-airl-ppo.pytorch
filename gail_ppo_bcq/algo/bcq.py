@@ -4,8 +4,8 @@ from torch import nn
 from torch.optim import Adam
 
 from .base import OfflineAlgorithm
-from gail_ppo.network import Noise, TwinnedStateActionFunction, CVAE
-from gail_ppo.utils import soft_update, disable_gradient
+from gail_ppo_bcq.network import Noise, TwinnedStateActionFunction, CVAE
+from gail_ppo_bcq.utils import soft_update, disable_gradient
 
 
 class BCQ(OfflineAlgorithm):

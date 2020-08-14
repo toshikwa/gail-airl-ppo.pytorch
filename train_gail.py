@@ -4,9 +4,9 @@ from datetime import datetime
 import torch
 import gym
 
-from gail_ppo.buffer import SerializedBuffer
-from gail_ppo.algo import GAIL
-from gail_ppo.trainer import OnlineTrainer
+from gail_ppo_bcq.buffer import SerializedBuffer
+from gail_ppo_bcq.algo import GAIL
+from gail_ppo_bcq.trainer import OnlineTrainer
 
 
 def run(args):

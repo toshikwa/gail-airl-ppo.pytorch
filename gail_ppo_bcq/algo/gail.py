@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from torch.optim import Adam
 
 from .ppo import PPO
-from gail_ppo.network import StateActionFunction
+from gail_ppo_bcq.network import StateActionFunction
 
 
 class GAIL(PPO):

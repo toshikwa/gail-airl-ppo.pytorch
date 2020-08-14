@@ -4,8 +4,8 @@ from datetime import datetime
 import torch
 import gym
 
-from gail_ppo.algo import SAC
-from gail_ppo.trainer import OnlineTrainer
+from gail_ppo_bcq.algo import SAC
+from gail_ppo_bcq.trainer import OnlineTrainer
 
 
 def run(args):

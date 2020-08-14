@@ -4,9 +4,11 @@ from torch import nn
 from torch.optim import Adam
 
 from .base import OnlineAlgorithm
-from gail_ppo.buffer import Buffer
-from gail_ppo.network import StateDependentPolicy, TwinnedStateActionFunction
-from gail_ppo.utils import soft_update, disable_gradient
+from gail_ppo_bcq.buffer import Buffer
+from gail_ppo_bcq.utils import soft_update, disable_gradient
+from gail_ppo_bcq.network import (
+    StateDependentPolicy, TwinnedStateActionFunction
+)
 
 
 class SAC(OnlineAlgorithm):

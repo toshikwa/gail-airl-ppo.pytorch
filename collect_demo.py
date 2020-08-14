@@ -3,8 +3,8 @@ import argparse
 import torch
 import gym
 
-from gail_ppo.algo import SACExpert
-from gail_ppo.utils import collect_demo
+from gail_ppo_bcq.algo import SACExpert
+from gail_ppo_bcq.utils import collect_demo
 
 
 def run(args):

@@ -26,7 +26,7 @@ def run(args):
 
     time = datetime.now().strftime("%Y%m%d-%H%M")
     log_dir = os.path.join(
-        'logs', args.env_id, 'gail', f'seed{args.seed}-{time}')
+        'logs', args.env_id, 'bcq', f'seed{args.seed}-{time}')
 
     trainer = OfflineTrainer(
         env_test=env_test,
@@ -44,7 +44,7 @@ if __name__ == '__main__':
     p.add_argument('--buffer', type=str, required=True)
     p.add_argument('--num_steps', type=int, default=10**5)
     p.add_argument('--eval_interval', type=int, default=10**3)
-    p.add_argument('--env_id', type=str, default='HalfCheetah-v3')
+    p.add_argument('--env_id', type=str, default='Hopper-v3')
     p.add_argument('--cuda', action='store_true')
     p.add_argument('--seed', type=int, default=0)
     args = p.parse_args()

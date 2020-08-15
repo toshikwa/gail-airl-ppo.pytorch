@@ -2,15 +2,15 @@ import os
 import argparse
 from datetime import datetime
 import torch
-import gym
 
+from gail_ppo_bcq.env import make_env
 from gail_ppo_bcq.algo import SAC
 from gail_ppo_bcq.trainer import OnlineTrainer
 
 
 def run(args):
-    env = gym.make(args.env_id)
-    env_test = gym.make(args.env_id)
+    env = make_env(args.env_id)
+    env_test = make_env(args.env_id)
 
     algo = SAC(
         state_shape=env.observation_space.shape,

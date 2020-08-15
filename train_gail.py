@@ -2,16 +2,16 @@ import os
 import argparse
 from datetime import datetime
 import torch
-import gym
 
+from gail_ppo_bcq.env import make_env
 from gail_ppo_bcq.buffer import SerializedBuffer
 from gail_ppo_bcq.algo import GAIL
 from gail_ppo_bcq.trainer import OnlineTrainer
 
 
 def run(args):
-    env = gym.make(args.env_id)
-    env_test = gym.make(args.env_id)
+    env = make_env(args.env_id)
+    env_test = make_env(args.env_id)
     buffer_exp = SerializedBuffer(
         path=args.buffer,
         device=torch.device("cuda" if args.cuda else "cpu")
@@ -22,7 +22,8 @@ def run(args):
         state_shape=env.observation_space.shape,
         action_shape=env.action_space.shape,
         device=torch.device("cuda" if args.cuda else "cpu"),
-        seed=args.seed
+        seed=args.seed,
+        rollout_length=args.rollout_length
     )
 
     time = datetime.now().strftime("%Y%m%d-%H%M")
@@ -44,6 +45,7 @@ def run(args):
 if __name__ == '__main__':
     p = argparse.ArgumentParser()
     p.add_argument('--buffer', type=str, required=True)
+    p.add_argument('--rollout_length', type=int, default=50000)
     p.add_argument('--num_steps', type=int, default=10**7)
     p.add_argument('--eval_interval', type=int, default=10**5)
     p.add_argument('--env_id', type=str, default='Hopper-v3')

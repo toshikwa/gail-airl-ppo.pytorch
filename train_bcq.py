@@ -2,15 +2,15 @@ import os
 import argparse
 from datetime import datetime
 import torch
-import gym
 
+from gail_ppo_bcq.env import make_env
 from gail_ppo_bcq.buffer import SerializedBuffer
 from gail_ppo_bcq.algo import BCQ
 from gail_ppo_bcq.trainer import OfflineTrainer
 
 
 def run(args):
-    env_test = gym.make(args.env_id)
+    env_test = make_env(args.env_id)
     buffer_exp = SerializedBuffer(
         path=args.buffer,
         device=torch.device("cuda" if args.cuda else "cpu")

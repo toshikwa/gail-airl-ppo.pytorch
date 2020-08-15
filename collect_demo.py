@@ -1,14 +1,14 @@
 import os
 import argparse
 import torch
-import gym
 
+from gail_ppo_bcq.env import make_env
 from gail_ppo_bcq.algo import SACExpert
 from gail_ppo_bcq.utils import collect_demo
 
 
 def run(args):
-    env = gym.make(args.env_id)
+    env = make_env(args.env_id)
 
     algo = SACExpert(
         state_shape=env.observation_space.shape,
@@ -36,7 +36,7 @@ def run(args):
 if __name__ == '__main__':
     p = argparse.ArgumentParser()
     p.add_argument('--weight', type=str, required=True)
-    p.add_argument('--env_id', type=str, default='HalfCheetah-v3')
+    p.add_argument('--env_id', type=str, default='Hopper-v3')
     p.add_argument('--buffer_size', type=int, default=10**6)
     p.add_argument('--std', type=float, default=0.0)
     p.add_argument('--p_rand', type=float, default=0.0)

@@ -34,12 +34,14 @@ def collect_demo(env, algo, buffer_size, device, std, p_rand, seed=0):
         device=device
     )
 
-    state = env.reset()
     total_return = 0.0
     num_episodes = 0
-    t = 0
 
-    for steps in tqdm(range(1, buffer_size + 1)):
+    state = env.reset()
+    t = 0
+    episode_return = 0.0
+
+    for _ in tqdm(range(1, buffer_size + 1)):
         t += 1
 
         if np.random.rand() < p_rand:
@@ -51,13 +53,15 @@ def collect_demo(env, algo, buffer_size, device, std, p_rand, seed=0):
         next_state, reward, done, _ = env.step(action)
         mask = False if t == env._max_episode_steps else done
         buffer.append(state, action, reward, mask, next_state)
+        episode_return += reward
 
         if done:
             num_episodes += 1
+            total_return += episode_return
             state = env.reset()
             t = 0
+            episode_return = 0.0
 
-        total_return += reward
         state = next_state
 
     print(f'Mean return of the expert is {total_return / num_episodes}')

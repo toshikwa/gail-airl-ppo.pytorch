@@ -4,7 +4,7 @@ from torch import nn
 from .utils import build_mlp
 
 
-class Noise(nn.Module):
+class Perturb(nn.Module):
 
     def __init__(self, state_shape, action_shape, hidden_units=(400, 300),
                  hidden_activation=nn.ReLU(inplace=True), std=0.05):
@@ -52,6 +52,7 @@ class CVAE(nn.Module):
         return reconsts, means, 2 * log_stds
 
     def generate(self, states):
+        # Clip to a range of [-0.5, 0.5] according to Appendix G of BCQ paper.
         latents = torch.randn(
             (states.size(0), self.latent_dim),
             device=states.device

@@ -164,11 +164,12 @@ class SAC(OnlineAlgorithm):
 
 class SACExpert(SAC):
 
-    def __init__(self, state_shape, action_shape, device, path):
+    def __init__(self, state_shape, action_shape, device, path,
+                 units_actor=(256, 256)):
         self.actor = StateDependentPolicy(
             state_shape=state_shape,
             action_shape=action_shape,
-            hidden_units=(256, 256),
+            hidden_units=units_actor,
             hidden_activation=nn.ReLU(inplace=True)
         ).to(device)
         self.actor.load_state_dict(torch.load(path))

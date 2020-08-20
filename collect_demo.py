@@ -29,7 +29,7 @@ def run(args):
     buffer.save(os.path.join(
         'buffers',
         args.env_id,
-        f'{args.buffer_size}_std{args.std}_prand{args.p_rand}.pth'
+        f'size{args.buffer_size}_std{args.std}_prand{args.p_rand}.pth'
     ))
 
 

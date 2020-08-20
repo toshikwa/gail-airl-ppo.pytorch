@@ -4,34 +4,34 @@ from torch import nn
 from torch.optim import Adam
 
 from .base import OfflineAlgorithm
-from gail_ppo_bcq.network import Noise, TwinnedStateActionFunction, CVAE
+from gail_ppo_bcq.network import Perturb, TwinnedStateActionFunction, CVAE
 from gail_ppo_bcq.utils import soft_update, disable_gradient
 
 
 class BCQ(OfflineAlgorithm):
 
     def __init__(self, buffer_exp, state_shape, action_shape, device, seed,
-                 gamma=0.99, batch_size=100, lr_noise=1e-3, lr_critic=1e-3,
-                 lr_cvae=1e-3, units_noise=(400, 300), units_critic=(400, 300),
-                 units_cvae=(400, 300), coef_kl=0.5, lambd=0.75, std=0.05,
+                 gamma=0.99, batch_size=100, lr_pert=1e-3, lr_critic=1e-3,
+                 lr_cvae=1e-3, units_pert=(400, 300), units_critic=(400, 300),
+                 units_cvae=(750, 750), coef_kl=0.5, lambd=0.75, std=0.05,
                  tau=5e-3, n_train=10, n_test=100):
         super().__init__(state_shape, action_shape, device, seed, gamma)
 
         # Expert's buffer.
         self.buffer_exp = buffer_exp
 
-        # Noise.
-        self.noise = Noise(
+        # Perturbation model.
+        self.pert = Perturb(
             state_shape=state_shape,
             action_shape=action_shape,
-            hidden_units=units_noise,
+            hidden_units=units_pert,
             hidden_activation=nn.ReLU(inplace=True),
             std=std
         ).to(device)
-        self.noise_target = Noise(
+        self.pert_target = Perturb(
             state_shape=state_shape,
             action_shape=action_shape,
-            hidden_units=units_noise,
+            hidden_units=units_pert,
             hidden_activation=nn.ReLU(inplace=True),
             std=std
         ).to(device).eval()
@@ -58,12 +58,12 @@ class BCQ(OfflineAlgorithm):
             hidden_activation=nn.ReLU(inplace=True)
         ).to(device)
 
-        soft_update(self.noise_target, self.noise, 1.0)
+        soft_update(self.pert_target, self.pert, 1.0)
         soft_update(self.critic_target, self.critic, 1.0)
-        disable_gradient(self.noise_target)
+        disable_gradient(self.pert_target)
         disable_gradient(self.critic_target)
 
-        self.optim_noise = Adam(self.noise.parameters(), lr=lr_noise)
+        self.optim_pert = Adam(self.pert.parameters(), lr=lr_pert)
         self.optim_critic = Adam(self.critic.parameters(), lr=lr_critic)
         self.optim_cvae = Adam(self.cvae.parameters(), lr=lr_cvae)
 
@@ -87,27 +87,29 @@ class BCQ(OfflineAlgorithm):
         with torch.no_grad():
             # Generate action candidates.
             action = self.cvae.generate(state)
-            # Add noise.
-            action = self.noise(state, action)
+            # Perturb actions.
+            action = self.pert(state, action)
             # Select action with maximal Q.
             action_index = self.critic.q1(state, action).argmax()
         return action[action_index].cpu().numpy()
 
     def update(self, writer):
+        self.learning_steps += 1
         states, actions, rewards, dones, next_states = \
             self.buffer_exp.sample(self.batch_size)
 
-        self.update_cvae(states, actions)
-        self.update_critic(states, actions, rewards, dones, next_states)
-        self.update_noise(states)
+        self.update_cvae(states, actions, writer)
+        self.update_critic(
+            states, actions, rewards, dones, next_states, writer)
+        self.update_pert(states, writer)
         self.update_target()
 
-    def update_cvae(self, states, actions):
+    def update_cvae(self, states, actions, writer):
         reconsts, means, log_vars = self.cvae(states, actions)
 
         loss_reconst = (reconsts - actions).pow_(2).sum(dim=1).mean()
         loss_kl = -0.5 * (
-            1 + log_vars - means.pow(2) - log_vars.exp()
+            log_vars - means.pow(2) - log_vars.exp()
         ).sum(dim=1).mean()
         loss_cvae = loss_reconst + self.coef_kl * loss_kl
 
@@ -115,7 +117,14 @@ class BCQ(OfflineAlgorithm):
         loss_cvae.backward(retain_graph=False)
         self.optim_cvae.step()
 
-    def update_critic(self, states, actions, rewards, dones, next_states):
+        if self.learning_steps % 1000 == 0:
+            writer.add_scalar(
+                'loss/reconst', loss_reconst.item(), self.learning_steps)
+            writer.add_scalar(
+                'loss/kl', loss_kl.item(), self.learning_steps)
+
+    def update_critic(self, states, actions, rewards, dones, next_states,
+                      writer):
         curr_qs1, curr_qs2 = self.critic(states, actions)
 
         with torch.no_grad():
@@ -123,8 +132,8 @@ class BCQ(OfflineAlgorithm):
             next_states = next_states.repeat_interleave(self.n_train, 0)
             # Generate action candidates.
             next_actions = self.cvae.generate(next_states)
-            # Add noise.
-            next_actions = self.noise_target(next_states, next_actions)
+            # Perturb actions.
+            next_actions = self.pert_target(next_states, next_actions)
             # Calculate next Q.
             next_qs1, next_qs2 = self.critic_target(next_states, next_actions)
 
@@ -143,18 +152,28 @@ class BCQ(OfflineAlgorithm):
         (loss_critic1 + loss_critic2).backward(retain_graph=False)
         self.optim_critic.step()
 
-    def update_noise(self, states):
-        actions = self.cvae.generate(states)
-        actions = self.noise(states, actions)
-        loss_noise = -self.critic.q1(states, actions).mean()
+        if self.learning_steps % 1000 == 0:
+            writer.add_scalar(
+                'loss/critic1', loss_critic1.item(), self.learning_steps)
+            writer.add_scalar(
+                'loss/critic2', loss_critic2.item(), self.learning_steps)
 
-        self.optim_noise.zero_grad()
-        loss_noise.backward(retain_graph=False)
-        self.optim_noise.step()
+    def update_pert(self, states, writer):
+        actions = self.cvae.generate(states)
+        actions = self.pert(states, actions)
+        loss_pert = -self.critic.q1(states, actions).mean()
+
+        self.optim_pert.zero_grad()
+        loss_pert.backward(retain_graph=False)
+        self.optim_pert.step()
+
+        if self.learning_steps % 1000 == 0:
+            writer.add_scalar(
+                'loss/perturb', loss_pert.item(), self.learning_steps)
 
     def update_target(self):
         soft_update(self.critic_target, self.critic, self.tau)
-        soft_update(self.noise_target, self.noise, self.tau)
+        soft_update(self.pert_target, self.pert, self.tau)
 
     def save_models(self, save_dir):
         pass

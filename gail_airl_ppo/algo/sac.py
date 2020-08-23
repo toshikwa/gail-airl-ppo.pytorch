@@ -3,15 +3,15 @@ import torch
 from torch import nn
 from torch.optim import Adam
 
-from .base import OnlineAlgorithm
-from gail_ppo_bcq.buffer import Buffer
-from gail_ppo_bcq.utils import soft_update, disable_gradient
-from gail_ppo_bcq.network import (
+from .base import Algorithm
+from gail_airl_ppo.buffer import Buffer
+from gail_airl_ppo.utils import soft_update, disable_gradient
+from gail_airl_ppo.network import (
     StateDependentPolicy, TwinnedStateActionFunction
 )
 
 
-class SAC(OnlineAlgorithm):
+class SAC(Algorithm):
 
     def __init__(self, state_shape, action_shape, device, seed, gamma=0.99,
                  batch_size=256, buffer_size=10**6, lr_actor=3e-4,

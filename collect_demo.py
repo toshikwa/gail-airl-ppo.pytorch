@@ -2,9 +2,9 @@ import os
 import argparse
 import torch
 
-from gail_ppo_bcq.env import make_env
-from gail_ppo_bcq.algo import SACExpert
-from gail_ppo_bcq.utils import collect_demo
+from gail_airl_ppo.env import make_env
+from gail_airl_ppo.algo import SACExpert
+from gail_airl_ppo.utils import collect_demo
 
 
 def run(args):

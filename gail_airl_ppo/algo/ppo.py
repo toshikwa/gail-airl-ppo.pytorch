@@ -2,14 +2,14 @@ import torch
 from torch import nn
 from torch.optim import Adam
 
-from .base import OnlineAlgorithm
-from gail_ppo_bcq.buffer import RolloutBuffer
-from gail_ppo_bcq.network import StateIndependentPolicy, StateFunction
+from .base import Algorithm
+from gail_airl_ppo.buffer import RolloutBuffer
+from gail_airl_ppo.network import StateIndependentPolicy, StateFunction
 
 
-def calculate_gae(values, rewards, dones, gamma=0.995, lambd=0.997):
+def calculate_gae(values, rewards, dones, next_values, gamma, lambd):
     # Calculate TD errors.
-    deltas = rewards + gamma * values[1:] * (1 - dones) - values[:-1]
+    deltas = rewards + gamma * next_values * (1 - dones) - values
     # Initialize gae.
     gaes = torch.empty_like(rewards)
 
@@ -18,18 +18,16 @@ def calculate_gae(values, rewards, dones, gamma=0.995, lambd=0.997):
     for t in reversed(range(rewards.size(0) - 1)):
         gaes[t] = deltas[t] + gamma * lambd * (1 - dones[t]) * gaes[t + 1]
 
-    # Calculate lambda-Return.
-    targets = gaes + values[:-1]
-
-    return targets, (gaes - gaes.mean()) / (gaes.std() + 1e-8)
+    return gaes + values, (gaes - gaes.mean()) / (gaes.std() + 1e-8)
 
 
-class PPO(OnlineAlgorithm):
+class PPO(Algorithm):
 
     def __init__(self, state_shape, action_shape, device, seed, gamma=0.995,
-                 rollout_length=2048, lr_actor=3e-4, lr_critic=3e-4,
-                 units_actor=(64, 64), units_critic=(64, 64), epoch_ppo=10,
-                 clip_eps=0.2, lambd=0.97, coef_ent=0.0, max_grad_norm=10.0):
+                 rollout_length=2048, mix_buffer=20, lr_actor=3e-4,
+                 lr_critic=3e-4, units_actor=(64, 64), units_critic=(64, 64),
+                 epoch_ppo=10, clip_eps=0.2, lambd=0.97, coef_ent=0.0,
+                 max_grad_norm=10.0):
         super().__init__(state_shape, action_shape, device, seed, gamma)
 
         # Rollout buffer.
@@ -37,7 +35,8 @@ class PPO(OnlineAlgorithm):
             buffer_size=rollout_length,
             state_shape=state_shape,
             action_shape=action_shape,
-            device=device
+            device=device,
+            mix=mix_buffer
         )
 
         # Actor.
@@ -76,10 +75,7 @@ class PPO(OnlineAlgorithm):
         next_state, reward, done, _ = env.step(action)
         mask = False if t == env._max_episode_steps else done
 
-        self.buffer.append(state, action, reward, mask, log_pi)
-
-        if step % self.rollout_length == 0:
-            self.buffer.append_last_state(next_state)
+        self.buffer.append(state, action, reward, mask, log_pi, next_state)
 
         if done:
             t = 0
@@ -89,20 +85,24 @@ class PPO(OnlineAlgorithm):
 
     def update(self, writer):
         self.learning_steps += 1
-        states, actions, rewards, dones, log_pis = self.buffer.get()
-        self.update_ppo(states, actions, rewards, dones, log_pis, writer)
+        states, actions, rewards, dones, log_pis, next_states = \
+            self.buffer.get()
+        self.update_ppo(
+            states, actions, rewards, dones, log_pis, next_states, writer)
 
-    def update_ppo(self, states, actions, rewards, dones, log_pis, writer):
+    def update_ppo(self, states, actions, rewards, dones, log_pis, next_states,
+                   writer):
         with torch.no_grad():
             values = self.critic(states)
+            next_values = self.critic(next_states)
 
         targets, gaes = calculate_gae(
-            values, rewards, dones, self.gamma, self.lambd)
+            values, rewards, dones, next_values, self.gamma, self.lambd)
 
         for _ in range(self.epoch_ppo):
             self.learning_steps_ppo += 1
-            self.update_critic(states[:-1], targets, writer)
-            self.update_actor(states[:-1], actions, log_pis, gaes, writer)
+            self.update_critic(states, targets, writer)
+            self.update_actor(states, actions, log_pis, gaes, writer)
 
     def update_critic(self, states, targets, writer):
         loss_critic = (self.critic(states) - targets).pow_(2).mean()

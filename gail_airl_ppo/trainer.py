@@ -4,10 +4,15 @@ from datetime import timedelta
 from torch.utils.tensorboard import SummaryWriter
 
 
-class OfflineTrainer:
+class Trainer:
 
-    def __init__(self, env_test, algo, log_dir, seed=0, num_steps=10**5,
+    def __init__(self, env, env_test, algo, log_dir, seed=0, num_steps=10**5,
                  eval_interval=10**3, num_eval_episodes=5):
+        super().__init__()
+
+        # Env to collect samples.
+        self.env = env
+        self.env.seed(seed)
 
         # Env for evaluation.
         self.env_test = env_test
@@ -31,10 +36,18 @@ class OfflineTrainer:
     def train(self):
         # Time to start training.
         self.start_time = time()
+        # Episode's timestep.
+        t = 0
+        # Initialize the environment.
+        state = self.env.reset()
 
         for step in range(1, self.num_steps + 1):
+            # Pass to the algorithm to update state and episode timestep.
+            state, t = self.algo.step(self.env, state, t, step)
+
             # Update the algorithm whenever ready.
-            self.algo.update(self.writer)
+            if self.algo.is_update(step):
+                self.algo.update(self.writer)
 
             # Evaluate regularly.
             if step % self.eval_interval == 0:
@@ -65,38 +78,3 @@ class OfflineTrainer:
     @property
     def time(self):
         return str(timedelta(seconds=int(time() - self.start_time)))
-
-
-class OnlineTrainer(OfflineTrainer):
-
-    def __init__(self, env, env_test, algo, log_dir, seed=0, num_steps=10**5,
-                 eval_interval=10**3, num_eval_episodes=5):
-        super().__init__(
-            env_test, algo, log_dir, seed, num_steps, eval_interval,
-            num_eval_episodes)
-
-        # Env to collect samples.
-        self.env = env
-        self.env.seed(seed)
-
-    def train(self):
-        # Time to start training.
-        self.start_time = time()
-        # Episode's timestep.
-        t = 0
-        # Initialize the environment.
-        state = self.env.reset()
-
-        for step in range(1, self.num_steps + 1):
-            # Pass to the algorithm to update state and episode timestep.
-            state, t = self.algo.step(self.env, state, t, step)
-
-            # Update the algorithm whenever ready.
-            if self.algo.is_update(step):
-                self.algo.update(self.writer)
-
-            # Evaluate regularly.
-            if step % self.eval_interval == 0:
-                self.evaluate(step)
-                self.algo.save_models(
-                    os.path.join(self.model_dir, f'step{step}'))

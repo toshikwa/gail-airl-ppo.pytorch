@@ -1,4 +1,4 @@
-# PPO-based GAIL and AIRL in PyTorch
+# GAIL and AIRL in PyTorch
 This is a PyTorch implementation of Generative Adversarial Imitation Learning(GAIL)[[1]](#references) and Adversarial Inverse Reinforcement Learning(AIRL)[[2]](#references) based on PPO[[3]](#references). I tried to make it easy for readers to understand the algorithm. Please let me know if you have any questions.
 
 
@@ -27,13 +27,13 @@ python collect_demo.py \
 
 Mean returns of experts we use in the experiments are listed below.
 
-| Weight(Env) | std | p_rand | Mean Return |
+| Weight(Env) | std | p_rand | Mean Return(without noises) |
 |:------------|:---:|:------:|:-----------:|
-| InvertedPendulum-v2.pth | 0.01 | 0.0 | 1000 |
-| Hopper-v3.pth | 0.01 | 0.0 | 2534 |
+| InvertedPendulum-v2.pth | 0.01 | 0.0 | 1000(1000)  |
+| Hopper-v3.pth | 0.01 | 0.0 | 2534(2791) |
 
 
-### Train Imitation Learning(IL)
+### Train Imitation Learning
 You can train IL using demonstrations. We set `rollout_length` to 2000 for `InvertedPendulum-v2` and 50000 for `Hopper-v3`.
 
 ```bash
@@ -43,7 +43,7 @@ python train_imitation.py \
     --num_steps 100000 --eval_interval 5000 --rollout_length 2000 --seed 0
 ```
 
-<img src="https://user-images.githubusercontent.com/37267851/90864888-78ef3e80-e3cc-11ea-8de9-9a5644b095cc.png" title="gail-InvertedPendulum-v2" width=400> <img src="https://user-images.githubusercontent.com/37267851/90864892-7987d500-e3cc-11ea-8f62-e1dacfd2c949.png" title="gail-Hopper-v3" width=400>
+<img src="https://user-images.githubusercontent.com/37267851/90990450-782cf700-e5dc-11ea-9ba9-1c3395a35481.png" title="InvertedPendulum-v2" width=400> <img src="https://user-images.githubusercontent.com/37267851/90990449-76fbca00-e5dc-11ea-9725-f2ef6077b158.png" title="Hopper-v3" width=400>
 
 
 ## References

@@ -27,7 +27,7 @@ python collect_demo.py \
 
 Mean returns of experts we use in the experiments are listed below.
 
-| Weight(Env) | std | p_rand | Mean Return(without noises) |
+| Weight(Env) | std | p_rand | Mean Return(without noise) |
 |:------------|:---:|:------:|:-----------:|
 | InvertedPendulum-v2.pth | 0.01 | 0.0 | 1000(1000)  |
 | Hopper-v3.pth | 0.01 | 0.0 | 2534(2791) |
@@ -43,7 +43,7 @@ python train_imitation.py \
     --num_steps 100000 --eval_interval 5000 --rollout_length 2000 --seed 0
 ```
 
-<img src="https://user-images.githubusercontent.com/37267851/90990450-782cf700-e5dc-11ea-9ba9-1c3395a35481.png" title="InvertedPendulum-v2" width=400> <img src="https://user-images.githubusercontent.com/37267851/90990449-76fbca00-e5dc-11ea-9725-f2ef6077b158.png" title="Hopper-v3" width=400>
+<img src="https://user-images.githubusercontent.com/37267851/91002942-dec90980-e60a-11ea-9bb4-3b5c308bc388.png" title="InvertedPendulum-v2" width=400> <img src="https://user-images.githubusercontent.com/37267851/91002939-dd97dc80-e60a-11ea-940f-6d340306582c.png" title="Hopper-v3" width=400>
 
 
 ## References

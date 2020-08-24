@@ -1,5 +1,5 @@
 import os
-from time import time
+from time import time, sleep
 from datetime import timedelta
 from torch.utils.tensorboard import SummaryWriter
 
@@ -54,6 +54,9 @@ class Trainer:
                 self.evaluate(step)
                 self.algo.save_models(
                     os.path.join(self.model_dir, f'step{step}'))
+
+        # Wait for the logging to be finished.
+        sleep(10)
 
     def evaluate(self, step):
         mean_return = 0.0

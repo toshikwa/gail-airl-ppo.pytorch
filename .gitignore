@@ -1,7 +1,8 @@
 .vscode/
 logs/
 __pycache__/
-buffers/
 *.log
 *.out
 run.sh
+.idea/
+test_disc.py

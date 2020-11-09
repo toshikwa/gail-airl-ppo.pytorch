@@ -1,7 +1,0 @@
-pyyaml
-tqdm
-gym==0.17.2
-numpy==1.19.1
-torch==1.6.0
-tensorboard==2.3.0
-mujoco_py==2.0.2.11

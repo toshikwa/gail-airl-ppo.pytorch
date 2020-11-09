@@ -64,5 +64,6 @@ def collect_demo(env, algo, buffer_size, device, std, p_rand, seed=0):
 
         state = next_state
 
-    print(f'Mean return of the expert is {total_return / num_episodes}')
-    return buffer
+    mean_return = total_return / num_episodes
+    print(f'Mean return of the expert is {mean_return}')
+    return buffer, mean_return

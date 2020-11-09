@@ -2,6 +2,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 from torch.optim import Adam
+import os
 
 from .ppo import PPO
 from gail_airl_ppo.network import AIRLDiscrim
@@ -102,4 +103,7 @@ class AIRL(PPO):
             writer.add_scalar('stats/acc_exp', acc_exp, self.learning_steps)
 
     def save_models(self, save_dir):
-        torch.save(self.disc.state_dict(), f'{save_dir}_disc.pkl')
+        if not os.path.isdir(save_dir):
+            os.mkdir(save_dir)
+        torch.save(self.disc.state_dict(), f'{save_dir}/disc.pkl')
+        torch.save(self.actor.state_dict(), f'{save_dir}/actor.pkl')

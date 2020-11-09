@@ -51,7 +51,7 @@ def collect_demo(env, algo, buffer_size, device, std, p_rand, seed=0):
             action = add_random_noise(action, std)
 
         next_state, reward, done, _ = env.step(action)
-        mask = False if t == env._max_episode_steps else done
+        mask = True if t == env._max_episode_steps else done
         buffer.append(state, action, reward, mask, next_state)
         episode_return += reward
 

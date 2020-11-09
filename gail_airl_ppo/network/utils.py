@@ -3,7 +3,7 @@ import torch
 from torch import nn
 
 
-def build_mlp(input_dim, output_dim, hidden_units=[64, 64],
+def build_mlp(input_dim, output_dim, hidden_units=(64, 64),
               hidden_activation=nn.Tanh(), output_activation=None):
     layers = []
     units = input_dim
@@ -15,6 +15,19 @@ def build_mlp(input_dim, output_dim, hidden_units=[64, 64],
     if output_activation is not None:
         layers.append(output_activation)
     return nn.Sequential(*layers)
+
+
+def build_param_list(input_dim, output_dim, device, hidden_units=(64, 64), requires_grad=True):
+    weights = []
+    biases = []
+    units = input_dim
+    for next_units in hidden_units:
+        weights.append(torch.zeros(next_units, units, requires_grad=requires_grad).to(device))
+        biases.append(torch.zeros(next_units, requires_grad=requires_grad).to(device))
+        units = next_units
+    weights.append(torch.zeros(output_dim, units, requires_grad=requires_grad).to(device))
+    biases.append(torch.zeros(output_dim, requires_grad=requires_grad).to(device))
+    return weights, biases
 
 
 def calculate_log_pi(log_stds, noises, actions):

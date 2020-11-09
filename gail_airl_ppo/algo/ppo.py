@@ -73,7 +73,7 @@ class PPO(Algorithm):
 
         action, log_pi = self.explore(state)
         next_state, reward, done, _ = env.step(action)
-        mask = False if t == env._max_episode_steps else done
+        mask = True if t == env._max_episode_steps else done
 
         self.buffer.append(state, action, reward, mask, log_pi, next_state)
 

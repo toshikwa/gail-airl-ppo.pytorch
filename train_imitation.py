@@ -13,6 +13,7 @@ def run(args):
     env = make_env(args.env_id)
     env_test = make_env(args.env_id)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     buffer_exp = SerializedBuffer(
         path=args.buffer,
         device=device

@@ -34,7 +34,7 @@ class Algorithm(ABC):
         pass
 
     @abstractmethod
-    def update(self):
+    def update(self, writer):
         pass
 
     @abstractmethod

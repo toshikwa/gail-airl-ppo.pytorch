@@ -16,6 +16,27 @@ class SerializedBuffer:
         self.dones = tmp['done'].clone().to(self.device)
         self.next_states = tmp['next_state'].clone().to(self.device)
 
+        self.traj_states = []
+        self.traj_actions = []
+        self.traj_rewards = []
+
+        self.n_traj = 0
+        traj_states = torch.Tensor([]).to(self.device)
+        traj_actions = torch.Tensor([]).to(self.device)
+        traj_rewards = 0
+        for i, done in enumerate(self.dones):
+            traj_states = torch.cat((traj_states, self.states[i]), dim=0)
+            traj_actions = torch.cat((traj_actions, self.actions[i]), dim=0)
+            traj_rewards += self.rewards[i]
+            if done == 1:
+                self.traj_states.append(traj_states)
+                self.traj_actions.append(traj_actions)
+                self.traj_rewards.append(traj_rewards)
+                traj_states = torch.Tensor([]).to(self.device)
+                traj_actions = torch.Tensor([]).to(self.device)
+                traj_rewards = 0
+                self.n_traj += 1
+
     def sample(self, batch_size):
         idxes = np.random.randint(low=0, high=self._n, size=batch_size)
         return (
@@ -24,6 +45,23 @@ class SerializedBuffer:
             self.rewards[idxes],
             self.dones[idxes],
             self.next_states[idxes]
+        )
+
+    def get(self):
+        return (
+            self.states,
+            self.actions,
+            self.rewards,
+            self.dones,
+            self.next_states
+        )
+
+    def sample_traj(self, batch_size):
+        idxes = np.random.randint(low=0, high=self.n_traj, size=batch_size)
+        return (
+            self.traj_states[idxes],
+            self.traj_actions[idxes],
+            self.traj_rewards[idxes]
         )
 
 
@@ -75,6 +113,7 @@ class RolloutBuffer:
         self._n = 0
         self._p = 0
         self.mix = mix
+        self.device = device
         self.buffer_size = buffer_size
         self.total_size = mix * buffer_size
 
@@ -125,4 +164,34 @@ class RolloutBuffer:
             self.dones[idxes],
             self.log_pis[idxes],
             self.next_states[idxes]
+        )
+
+    def sample_traj(self, batch_size):
+        assert self._p % self.buffer_size == 0
+
+        n_traj = 0
+        all_traj_states = []
+        all_traj_actions = []
+        all_traj_rewards = []
+        traj_states = torch.Tensor([]).to(self.device)
+        traj_actions = torch.Tensor([]).to(self.device)
+        traj_rewards = 0
+        for i, done in enumerate(self.dones):
+            traj_states = torch.cat((traj_states, self.states[i].unsqueeze(0)), dim=0)
+            traj_actions = torch.cat((traj_actions, self.actions[i].unsqueeze(0)), dim=0)
+            traj_rewards += self.rewards[i]
+            if done == 1:
+                all_traj_states.append(traj_states)
+                all_traj_actions.append(traj_actions)
+                all_traj_rewards.append(traj_rewards)
+                traj_states = torch.Tensor([]).to(self.device)
+                traj_actions = torch.Tensor([]).to(self.device)
+                traj_rewards = 0
+                n_traj += 1
+
+        idxes = np.random.randint(low=0, high=n_traj, size=batch_size)
+        return (
+            np.array(all_traj_states)[idxes],
+            np.array(all_traj_actions)[idxes],
+            np.array(all_traj_rewards)[idxes]
         )

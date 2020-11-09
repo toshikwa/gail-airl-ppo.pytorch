@@ -12,16 +12,17 @@ from gail_airl_ppo.trainer import Trainer
 def run(args):
     env = make_env(args.env_id)
     env_test = make_env(args.env_id)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     buffer_exp = SerializedBuffer(
         path=args.buffer,
-        device=torch.device("cuda" if args.cuda else "cpu")
+        device=device
     )
 
     algo = ALGOS[args.algo](
         buffer_exp=buffer_exp,
         state_shape=env.observation_space.shape,
         action_shape=env.action_space.shape,
-        device=torch.device("cuda" if args.cuda else "cpu"),
+        device=device,
         seed=args.seed,
         rollout_length=args.rollout_length
     )
@@ -45,11 +46,11 @@ def run(args):
 if __name__ == '__main__':
     p = argparse.ArgumentParser()
     p.add_argument('--buffer', type=str, required=True)
-    p.add_argument('--rollout_length', type=int, default=50000)
-    p.add_argument('--num_steps', type=int, default=10**7)
-    p.add_argument('--eval_interval', type=int, default=10**5)
-    p.add_argument('--env_id', type=str, default='Hopper-v3')
-    p.add_argument('--algo', type=str, default='gail')
+    p.add_argument('--rollout_length', type=int, default=2000)
+    p.add_argument('--num_steps', type=int, default=10**6)
+    p.add_argument('--eval_interval', type=int, default=10**4)
+    p.add_argument('--env_id', type=str, default='Reacher-v2')
+    p.add_argument('--algo', type=str, default='airl')
     p.add_argument('--cuda', action='store_true')
     p.add_argument('--seed', type=int, default=0)
     args = p.parse_args()

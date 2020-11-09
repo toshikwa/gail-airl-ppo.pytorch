@@ -6,3 +6,4 @@ __pycache__/
 run.sh
 .idea/
 test_disc.py
+test_conf.py

@@ -42,7 +42,7 @@ def mix_demo(buffer_name, size):
     output_buffer.save(os.path.join(
         'buffers',
         env_name,
-        f'size{sum(size)}_reward{rewards_name}'
+        f'size{sum(size)}_reward{rewards_name}.pth'
     ))
 
 

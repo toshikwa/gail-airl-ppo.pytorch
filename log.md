@@ -9,3 +9,5 @@ Experiment logs
 
 ## SIL
 
+- seed0-20201109-1856
+    - demo: size5000_reward-4.35.pth

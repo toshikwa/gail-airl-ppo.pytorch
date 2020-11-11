@@ -7,3 +7,4 @@ run.sh
 .idea/
 test_disc.py
 test_conf.py
+log.md

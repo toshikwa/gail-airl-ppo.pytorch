@@ -21,7 +21,7 @@ class SIL(PPO):
                  units_actor=(64, 64), units_critic=(64, 64),
                  units_disc_r=(100, 100), units_disc_v=(100, 100),
                  epoch_ppo=50, epoch_disc=10, clip_eps=0.2, lambd=0.97,
-                 coef_ent=0.0, max_grad_norm=10.0, units_conf=(64, 64), lr_conf=3e-4):
+                 coef_ent=0.0, max_grad_norm=10.0, units_conf=(64, 64), lr_conf=1e-4):
         super().__init__(
             state_shape, action_shape, device, seed, gamma, rollout_length,
             mix_buffer, lr_actor, lr_critic, units_actor, units_critic,
@@ -76,7 +76,8 @@ class SIL(PPO):
             self.buffer_exp.get()
         all_conf = self.conf_net(all_states_exp, all_actions_exp)
         all_conf_mean = Variable(all_conf.mean())
-        conf = all_conf / all_conf_mean
+        # conf = all_conf / all_conf_mean
+        conf = all_conf / 0.2
         idxes = np.random.randint(low=0, high=all_states_exp.shape[0], size=batch_size)
         return (
             all_states_exp[idxes],

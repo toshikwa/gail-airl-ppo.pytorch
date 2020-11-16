@@ -57,11 +57,10 @@ def mix_demo(buffer_name, size):
 if __name__ == '__main__':
     BUFFER_NAME = (
         'buffers/Reacher-v2/size5000_reward-4.35.pth',
-        'buffers/Reacher-v2/size5000_reward-5.51.pth',
         'buffers/Reacher-v2/size5000_reward-8.85.pth',
         'buffers/Reacher-v2/size5000_reward-44.92.pth',
         'buffers/Reacher-v2/size5000_reward-81.01.pth'
     )
-    SIZE = (1000, 1000, 1000, 1000, 1000)
+    SIZE = (1000, 1000, 2000, 1000)
     mix_demo(buffer_name=BUFFER_NAME,
              size=SIZE)

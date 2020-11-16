@@ -21,7 +21,7 @@ class SIL(PPO):
                  units_actor=(64, 64), units_critic=(64, 64),
                  units_disc_r=(100, 100), units_disc_v=(100, 100),
                  epoch_ppo=50, epoch_disc=10, clip_eps=0.2, lambd=0.97,
-                 coef_ent=0.0, max_grad_norm=10.0, units_conf=(64, 64), lr_conf=1e-2):
+                 coef_ent=0.0, max_grad_norm=10.0, units_conf=(64, 64), lr_conf=1e-1):
         super().__init__(
             state_shape, action_shape, device, seed, gamma, rollout_length,
             mix_buffer, lr_actor, lr_critic, units_actor, units_critic,
@@ -194,10 +194,10 @@ class SIL(PPO):
     def update_conf(self, states_traj, actions_traj, rewards_traj, next_states_traj, writer):
         learned_rewards_traj = []
         for i in range(len(states_traj)):
-            learned_rewards_traj.append(self.detached_disc.g(states_traj[i]).sum().unsqueeze(0))
-            # learned_rewards_traj.append(self.detached_disc.f(states_traj[i],
-            #                                                  actions_traj[i],
-            #                                                  next_states_traj[i]).sum().unsqueeze(0))
+            # learned_rewards_traj.append(self.detached_disc.g(states_traj[i]).sum().unsqueeze(0))
+            learned_rewards_traj.append(self.detached_disc.f(states_traj[i],
+                                                             actions_traj[i],
+                                                             next_states_traj[i]).sum().unsqueeze(0))
         outer_loss = self.ranking_loss(rewards_traj, torch.cat(learned_rewards_traj, dim=0))
 
         optim_conf = Adam([self.conf], lr=self.lr_conf)

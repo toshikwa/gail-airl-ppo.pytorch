@@ -21,7 +21,7 @@ class SIL(PPO):
                  units_actor=(64, 64), units_critic=(64, 64),
                  units_disc_r=(100, 100), units_disc_v=(100, 100),
                  epoch_ppo=50, epoch_disc=10, clip_eps=0.2, lambd=0.97,
-                 coef_ent=0.0, max_grad_norm=10.0, units_conf=(64, 64), lr_conf=1e-4):
+                 coef_ent=0.0, max_grad_norm=10.0, units_conf=(64, 64), lr_conf=1e-4, fixed_alpha=0.2):
         super().__init__(
             state_shape, action_shape, device, seed, gamma, rollout_length,
             mix_buffer, lr_actor, lr_critic, units_actor, units_critic,
@@ -66,6 +66,7 @@ class SIL(PPO):
         self.learning_steps_conf = 0
         self.optim_conf = Adam(self.conf_net.parameters(), lr=lr_conf)
         self.epoch_conf = self.epoch_disc
+        self.fixed_alpha = fixed_alpha
 
         self.batch_size = batch_size
         self.traj_batch_size = traj_batch_size
@@ -77,7 +78,7 @@ class SIL(PPO):
         all_conf = self.conf_net(all_states_exp, all_actions_exp)
         all_conf_mean = Variable(all_conf.mean())
         # conf = all_conf / all_conf_mean
-        conf = all_conf / 0.2
+        conf = all_conf / self.fixed_alpha
         idxes = np.random.randint(low=0, high=all_states_exp.shape[0], size=batch_size)
         return (
             all_states_exp[idxes],
@@ -205,6 +206,16 @@ class SIL(PPO):
         if self.learning_steps_conf % self.epoch_conf == 0:
             writer.add_scalar(
                 'loss/outer', outer_loss.item(), self.learning_steps
+            )
+
+            # Samples from expert's demonstrations.
+            all_states_exp, all_actions_exp, _, all_dones_exp, all_next_states_exp = \
+                self.buffer_exp.get()
+            all_conf = self.conf_net(all_states_exp, all_actions_exp)
+            all_conf_mean = all_conf.mean()
+
+            writer.add_scalar(
+                'confidence/mean', all_conf_mean.item(), self.learning_steps
             )
 
     def ranking_loss(self, truth, approx):

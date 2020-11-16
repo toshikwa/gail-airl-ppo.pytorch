@@ -200,10 +200,14 @@ class SIL(PPO):
             #                                                  next_states_traj[i]).sum().unsqueeze(0))
         outer_loss = self.ranking_loss(rewards_traj, torch.cat(learned_rewards_traj, dim=0))
 
-        optim_conf = Adam([self.conf], lr=self.lr_conf)
-        optim_conf.zero_grad()
+        # optim_conf = Adam([self.conf], lr=self.lr_conf)
+        # optim_conf.zero_grad()
+        self.conf.grad.zero_()
         outer_loss.backward()
-        optim_conf.step()
+        with torch.no_grad():
+            self.conf -= self.lr_conf * self.conf.grad
+        self.conf.requires_grad = True
+        # optim_conf.step()
 
         if self.learning_steps_conf % self.epoch_conf == 0:
             writer.add_scalar(

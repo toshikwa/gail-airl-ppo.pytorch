@@ -26,7 +26,6 @@ def run(args):
         device=device,
         seed=args.seed,
         rollout_length=args.rollout_length,
-        fixed_alpha=args.alpha
     )
 
     time = datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -55,6 +54,5 @@ if __name__ == '__main__':
     p.add_argument('--algo', type=str, default='airl')
     p.add_argument('--cuda', action='store_true')
     p.add_argument('--seed', type=int, default=0)
-    p.add_argument('--alpha', type=float, required=True)
     args = p.parse_args()
     run(args)

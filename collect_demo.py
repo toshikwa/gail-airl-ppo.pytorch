@@ -28,11 +28,19 @@ def run(args):
         p_rand=args.p_rand,
         seed=args.seed
     )
-    buffer.save(os.path.join(
+
+    if os.path.exists(os.path.join(
         'buffers',
         args.env_id,
         f'size{args.buffer_size}_reward{round(mean_return, 2)}.pth'
-    ))
+    )):
+        print('Error: demonstrations with the same reward exists')
+    else:
+        buffer.save(os.path.join(
+            'buffers',
+            args.env_id,
+            f'size{args.buffer_size}_reward{round(mean_return, 2)}.pth'
+        ))
 
 
 if __name__ == '__main__':

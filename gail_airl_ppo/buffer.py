@@ -172,20 +172,25 @@ class RolloutBuffer:
         n_traj = 0
         all_traj_states = []
         all_traj_actions = []
+        all_traj_next_states = []
         all_traj_rewards = []
         traj_states = torch.Tensor([]).to(self.device)
         traj_actions = torch.Tensor([]).to(self.device)
+        traj_next_states = torch.Tensor([]).to(self.device)
         traj_rewards = 0
         for i, done in enumerate(self.dones):
             traj_states = torch.cat((traj_states, self.states[i].unsqueeze(0)), dim=0)
             traj_actions = torch.cat((traj_actions, self.actions[i].unsqueeze(0)), dim=0)
+            traj_next_states = torch.cat((traj_next_states, self.next_states[i].unsqueeze(0)), dim=0)
             traj_rewards += self.rewards[i]
             if done == 1:
                 all_traj_states.append(traj_states)
                 all_traj_actions.append(traj_actions)
+                all_traj_next_states.append(traj_next_states)
                 all_traj_rewards.append(traj_rewards)
                 traj_states = torch.Tensor([]).to(self.device)
                 traj_actions = torch.Tensor([]).to(self.device)
+                traj_next_states = torch.Tensor([]).to(self.device)
                 traj_rewards = 0
                 n_traj += 1
 
@@ -193,5 +198,6 @@ class RolloutBuffer:
         return (
             np.array(all_traj_states)[idxes],
             np.array(all_traj_actions)[idxes],
-            np.array(all_traj_rewards)[idxes]
+            np.array(all_traj_rewards)[idxes],
+            np.array(all_traj_next_states)[idxes]
         )

@@ -19,22 +19,27 @@ class SerializedBuffer:
         self.traj_states = []
         self.traj_actions = []
         self.traj_rewards = []
+        self.traj_next_states = []
 
         self.n_traj = 0
         traj_states = torch.Tensor([]).to(self.device)
         traj_actions = torch.Tensor([]).to(self.device)
         traj_rewards = 0
+        traj_next_states = torch.Tensor([]).to(self.device)
         for i, done in enumerate(self.dones):
             traj_states = torch.cat((traj_states, self.states[i]), dim=0)
             traj_actions = torch.cat((traj_actions, self.actions[i]), dim=0)
             traj_rewards += self.rewards[i]
+            traj_next_states = torch.cat((traj_next_states, self.next_states[i]), dim=0)
             if done == 1:
                 self.traj_states.append(traj_states)
                 self.traj_actions.append(traj_actions)
                 self.traj_rewards.append(traj_rewards)
+                self.traj_next_states.append(traj_next_states)
                 traj_states = torch.Tensor([]).to(self.device)
                 traj_actions = torch.Tensor([]).to(self.device)
                 traj_rewards = 0
+                traj_next_states = torch.Tensor([]).to(self.device)
                 self.n_traj += 1
 
     def sample(self, batch_size):
@@ -61,7 +66,8 @@ class SerializedBuffer:
         return (
             self.traj_states[idxes],
             self.traj_actions[idxes],
-            self.traj_rewards[idxes]
+            self.traj_rewards[idxes],
+            self.traj_next_states[idxes]
         )
 
 

@@ -194,10 +194,10 @@ class SIL(PPO):
     def update_conf(self, states_traj, actions_traj, rewards_traj, next_states_traj, writer):
         learned_rewards_traj = []
         for i in range(len(states_traj)):
-            # learned_rewards_traj.append(self.detached_disc.g(states_traj[i]).sum().unsqueeze(0))
-            learned_rewards_traj.append(self.detached_disc.f(states_traj[i],
-                                                             actions_traj[i],
-                                                             next_states_traj[i]).sum().unsqueeze(0))
+            learned_rewards_traj.append(self.detached_disc.g(states_traj[i]).sum().unsqueeze(0))
+            # learned_rewards_traj.append(self.detached_disc.f(states_traj[i],
+            #                                                  actions_traj[i],
+            #                                                  next_states_traj[i]).sum().unsqueeze(0))
         outer_loss = self.ranking_loss(rewards_traj, torch.cat(learned_rewards_traj, dim=0))
 
         optim_conf = Adam([self.conf], lr=self.lr_conf)

@@ -202,11 +202,12 @@ class SIL(PPO):
 
         # optim_conf = Adam([self.conf], lr=self.lr_conf)
         # optim_conf.zero_grad()
-        self.conf.grad.zero_()
+
         outer_loss.backward()
         with torch.no_grad():
             self.conf -= self.lr_conf * self.conf.grad
         self.conf.requires_grad = True
+        self.conf.grad.zero_()
         # optim_conf.step()
 
         if self.learning_steps_conf % self.epoch_conf == 0:

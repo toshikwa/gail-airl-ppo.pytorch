@@ -29,7 +29,7 @@ def run(args):
         fixed_alpha=args.alpha
     )
 
-    time = datetime.now().strftime("%Y%m%d-%H%M")
+    time = datetime.now().strftime("%Y%m%d-%H%M%S")
     log_dir = os.path.join(
         'logs', args.env_id, args.algo, f'seed{args.seed}-{time}')
 

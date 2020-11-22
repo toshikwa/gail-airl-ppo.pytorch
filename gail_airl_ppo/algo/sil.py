@@ -10,7 +10,6 @@ import os
 
 from .ppo import PPO
 from gail_airl_ppo.network import AIRLDiscrim, AIRLDetachedDiscrim
-from gail_airl_ppo.network import SILConfidence
 
 
 class SIL(PPO):
@@ -21,7 +20,7 @@ class SIL(PPO):
                  units_actor=(64, 64), units_critic=(64, 64),
                  units_disc_r=(100, 100), units_disc_v=(100, 100),
                  epoch_ppo=50, epoch_disc=10, clip_eps=0.2, lambd=0.97,
-                 coef_ent=0.0, max_grad_norm=10.0, units_conf=(64, 64), lr_conf=1e-1):
+                 coef_ent=0.0, max_grad_norm=10.0, lr_conf=1e-1):
         super().__init__(
             state_shape, action_shape, device, seed, gamma, rollout_length,
             mix_buffer, lr_actor, lr_critic, units_actor, units_critic,
@@ -60,7 +59,6 @@ class SIL(PPO):
 
         self.learning_steps_conf = 0
         self.lr_conf = lr_conf
-        # self.optim_conf = Adam(self.conf_net.parameters(), lr=lr_conf)
         self.epoch_conf = self.epoch_disc
 
         self.batch_size = batch_size
@@ -116,7 +114,7 @@ class SIL(PPO):
             states_traj, actions_traj, rewards_traj, next_states_traj = self.buffer.sample_traj(self.traj_batch_size)
 
             # Update conf
-            self.update_conf(states_traj, actions_traj, rewards_traj, next_states_traj, writer)
+            self.update_conf(states_traj, rewards_traj, writer)
 
             # ---Update the discriminator for step 2
             # Samples from current policy's trajectories.
@@ -191,24 +189,17 @@ class SIL(PPO):
             writer.add_scalar('stats/acc_pi', acc_pi, self.learning_steps)
             writer.add_scalar('stats/acc_exp', acc_exp, self.learning_steps)
 
-    def update_conf(self, states_traj, actions_traj, rewards_traj, next_states_traj, writer):
+    def update_conf(self, states_traj, rewards_traj, writer):
         learned_rewards_traj = []
         for i in range(len(states_traj)):
             learned_rewards_traj.append(self.detached_disc.g(states_traj[i]).sum().unsqueeze(0))
-            # learned_rewards_traj.append(self.detached_disc.f(states_traj[i],
-            #                                                  actions_traj[i],
-            #                                                  next_states_traj[i]).sum().unsqueeze(0))
         outer_loss = self.ranking_loss(rewards_traj, torch.cat(learned_rewards_traj, dim=0))
-
-        # optim_conf = Adam([self.conf], lr=self.lr_conf)
-        # optim_conf.zero_grad()
 
         outer_loss.backward()
         with torch.no_grad():
             self.conf -= self.lr_conf * self.conf.grad
         self.conf.requires_grad = True
         self.conf.grad.zero_()
-        # optim_conf.step()
 
         if self.learning_steps_conf % self.epoch_conf == 0:
             writer.add_scalar(
